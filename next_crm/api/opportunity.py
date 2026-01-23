@@ -94,3 +94,37 @@ def create_checklist(docname, field=None, value=None):
 
     todo.insert(ignore_permissions=True)
     return todo.name
+
+
+def _validate_reference(reference_doctype: str, reference_name: str):
+    if reference_doctype not in ("Lead", "Opportunity"):
+        frappe.throw(_("Invalid reference_doctype"), frappe.ValidationError)
+
+    if not reference_name:
+        frappe.throw(_("reference_name is required"), frappe.ValidationError)
+
+    if not frappe.db.exists(reference_doctype, reference_name):
+        frappe.throw(_("Document not found"), frappe.DoesNotExistError)
+
+    if not frappe.has_permission(reference_doctype, "write", reference_name):
+        frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+
+@frappe.whitelist()
+def update_deal(reference_doctype, reference_name, deal_stage=None, status=None):
+    _validate_reference(reference_doctype, reference_name)
+
+    updates = {}
+
+    if status is not None:
+        updates["status"] = status
+
+    if deal_stage is not None and reference_doctype == "Opportunity":
+        updates["sales_stage"] = deal_stage
+
+    if updates:
+        frappe.db.set_value(
+            reference_doctype, reference_name, updates, update_modified=True
+        )
+
+    return frappe.get_doc(reference_doctype, reference_name)
