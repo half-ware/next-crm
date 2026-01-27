@@ -58,7 +58,9 @@ def create_note(
     return new_note
 
 
-def validate(reference_doctype, reference_name, parent_note=None, attachments=None):
+def _validate_crm_note(
+    reference_doctype, reference_name, parent_note=None, attachments=None
+):
     if reference_doctype not in ("Lead", "Opportunity"):
         frappe.throw(_("Invalid reference_doctype"), frappe.ValidationError)
 
@@ -102,7 +104,7 @@ def log_note(
 ):
     """Log a CRM Note linked to a Lead or Opportunity."""
 
-    validate(reference_doctype, reference_name, parent_note, attachments)
+    _validate_crm_note(reference_doctype, reference_name, parent_note, attachments)
 
     return create_note(
         doctype=reference_doctype,
