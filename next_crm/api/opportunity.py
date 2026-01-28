@@ -110,9 +110,27 @@ def _validate_reference(reference_doctype: str, reference_name: str):
         frappe.throw(_("Not permitted"), frappe.PermissionError)
 
 
+def _validate_deal_inputs(reference_doctype: str, deal_stage=None, status=None):
+    if deal_stage is not None:
+        if reference_doctype == "Opportunity" and not frappe.db.exists(
+            "Sales Stage", deal_stage
+        ):
+            frappe.throw(_("Invalid deal_stage"), frappe.ValidationError)
+
+    if status is not None:
+        status_doctype = (
+            "CRM Deal Status"
+            if reference_doctype == "Opportunity"
+            else "CRM Lead Status"
+        )
+        if not frappe.db.exists(status_doctype, status):
+            frappe.throw(_("Invalid status"), frappe.ValidationError)
+
+
 @frappe.whitelist()
 def update_deal(reference_doctype, reference_name, deal_stage=None, status=None):
     _validate_reference(reference_doctype, reference_name)
+    _validate_deal_inputs(reference_doctype, deal_stage=deal_stage, status=status)
 
     updates = {}
 
